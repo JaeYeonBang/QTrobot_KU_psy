@@ -40,6 +40,6 @@ $ catkin_make
 
 ## Launching QTrobot GPT Demo rosnode
 ```
-$ roslaunch gpt_demo gpt_bot.launch
+$ roslaunch gpt_demo_korean gpt_bot_korean.launch
 ```
 
