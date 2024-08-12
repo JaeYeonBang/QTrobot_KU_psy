@@ -7,11 +7,13 @@ import rospy
 import text2emotion as te
 from utils import aimodel
 from std_msgs.msg import String
-from qt_robot_interface.srv import *
-from qt_gspeech_app.srv import *
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.sentiment import SentimentIntensityAnalyzer
+from std_msgs.msg import String
+from qt_robot_interface.srv import *
+from qt_gspeech_app.srv import *
+# from qt_riva_asr_app.srv import *
 
 class Synchronizer():
     """
@@ -58,31 +60,51 @@ class Synchronizer():
 
 
 
-class QTGPTGspeechBot():
+class QTChatBot():
     """QTrobot talks with you via GPT3 and Google Speech"""
 
     def __init__(self):
+        print("init start, nltk down")
         nltk.download('vader_lexicon')
-        self.chatgpt_model = rospy.get_param("/gpt_demo/chatengine/OPENAI_CHATGPT_MODEL", False) 
-        if self.chatgpt_model:
+        self.model_engine = rospy.get_param("/gpt_demo/chatengine/engine", "chatgpt")
+
+        if self.model_engine == 'chatgpt':
             self.aimodel = aimodel.ChatGPT()
-        else:
+        elif self.model_engine == 'davinci3':
             self.aimodel = aimodel.Davinci3() 
+        elif self.model_engine == 'fastchat':
+            self.aimodel = aimodel.FastChat()
+        else:
+            raise ValueError(f'{self.model_engine} not supported!')
+
         self.sia = SentimentIntensityAnalyzer()
         self.finish = False
         self.defaultlanguage = 'en-US'        
+        #self.defaultlanguage = 'ko-KR'        
         self.error_feedback = "Sorry. It seems I have some technical problem. Please try again."
 
         # define a ros service and publisher
         self.emotion_pub = rospy.Publisher('/qt_robot/emotion/show', String, queue_size=2)
         self.gesture_pub = rospy.Publisher('/qt_robot/gesture/play', String, queue_size=2)
         self.talkText = rospy.ServiceProxy('/qt_robot/behavior/talkText', behavior_talk_text)
-        self.speechConfig = rospy.ServiceProxy('/qt_robot/speech/config', speech_config)
         self.recognizeQuestion = rospy.ServiceProxy('/qt_robot/gspeech/recognize', speech_recognize) 
+        # self.recognizeQuestion = rospy.ServiceProxy('/qt_robot/speech/recognize', speech_recognize) 
+        self.audioPlay_pub = rospy.Publisher('/qt_robot/audio/play', String, queue_size=10)
 
+
+        print("init, ros")
         # block/wait for ros service
-        rospy.wait_for_service('/qt_robot/behavior/talkText')     
+        rospy.wait_for_service('/qt_robot/behavior/talkText')
+
+        print('init talktext fin')
+        #rospy.wait_for_service('/qt_robot/speech/recognize')
         rospy.wait_for_service('/qt_robot/gspeech/recognize')
+        
+        print("init, fin")
+    def talk(self, text):
+        print('QT talking:', text)
+        self.talkText(text)        
+
 
     def speak(self, text):
         sentences = sent_tokenize(text)
@@ -103,8 +125,7 @@ class QTGPTGspeechBot():
                 self.gesture_pub.publish(random.choice(["no"]))
             elif len(words) > 5 and random.choice([0, 1]) == 0:
                 self.gesture_pub.publish(random.choice(["talk", "crossed_arm"]))
-            print("QTrobot:", sentence)
-            self.talkText(sentence)      
+            self.talk(sentence)      
         # home pos
         self.gesture_pub.publish(random.choice(["QT/neutral"]))
 
@@ -116,35 +137,35 @@ class QTGPTGspeechBot():
 
     def bored(self):
         if random.choice([0, 1]) == 0:
-            self.gesture_pub.publish(random.choice(["QT/angry"]))
-            self.talkText(random.choice(["#THROAT01#","#BREATH01#","#THROAT02#"]))
+        #    self.gesture_pub.publish(random.choice(["QT/angry"]))
+            self.talk(random.choice(["#THROAT01#","#BREATH01#","#THROAT02#"]))
 
     def show_sentiment(self, sentiment):
         if sentiment['emotion'] == 'happy':
             self.emotion_pub.publish("QT/happy")
             self.gesture_pub.publish(random.choice(["QT/happy", "QT/monkey"]))
-            self.talkText(random.choice(["Yeah!","WOW!","Fantastic!", "This is great!"]))
+            self.talk(random.choice(["Yeah!","WOW!","Fantastic!", "This is great!"]))
         elif sentiment['emotion'] == 'angry':
             self.emotion_pub.publish("QT/angry")
             self.gesture_pub.publish(random.choice(["QT/angry", "QT/challenge"]))
-            self.talkText(random.choice(["That's terrible", "That's not good"]))    
+            self.talk(random.choice(["That's terrible", "That's not good"]))    
         elif sentiment['emotion'] == 'surprise':
             if sentiment['compound'] > 0: 
                 self.emotion_pub.publish("QT/surprise")
                 self.gesture_pub.publish(random.choice(["QT/surprise", "QT/show_QT"]))
-                self.talkText(random.choice(["Oh WOW!", "That's amazing!"]))
+                self.talk(random.choice(["Oh WOW!", "That's amazing!"]))
             else:
                 self.emotion_pub.publish("QT/surprise")
                 self.gesture_pub.publish(random.choice(["QT/angry", "QT/surprise"]))
-                self.talkText(random.choice(["Oh no!", "Oh my goodness, no!"]))
+                self.talk(random.choice(["Oh no!", "Oh my goodness, no!"]))
         elif sentiment['emotion'] == 'sad':
             self.emotion_pub.publish("QT/sad")    
             self.gesture_pub.publish(random.choice(["QT/sad", "crossed_arm"]))
-            self.talkText(random.choice(["Oh no!", "No way!", "No, really?"]))
+            self.talk(random.choice(["Oh no!", "No way!", "No, really?"]))
         elif sentiment['emotion'] == 'fear':
             self.emotion_pub.publish("QT/afraid")
             self.gesture_pub.publish(random.choice(["QT/sad", "crossed_arm"]))
-            self.talkText(random.choice(["Oh gosh!", "Oh, I understand", "That must be worrisome!","Sorry to hear that!"]))
+            self.talk(random.choice(["Oh gosh!", "Oh, I understand", "That must be worrisome!","Sorry to hear that!"]))
         elif sentiment['emotion'] == 'neutral':
             self.emotion_pub.publish("QT/neutral") 
             self.gesture_pub.publish("QT/neutral")                   
@@ -184,31 +205,47 @@ class QTGPTGspeechBot():
         return text
     
     def intro(self):
+        rospy.loginfo("intro fun")
         response =  self.aimodel.generate("Who are you?")
         print("Intro: ",response)
-        self.talkText(response) 
+        self.talk(response) 
 
 
     def start(self):
+        print('start!!!!!')
         self.intro()
+        i  = 0
         while not rospy.is_shutdown() and not self.finish:            
+            if i == 0:
+                self.audioPlay_pub.publish("custom_sounds/message_sound")
+            if i >= 10:
+                break
+
             print('listenting...') 
+            i = i + 1
+            
+            
             try:    
-                recognize_result = self.recognizeQuestion(language=self.defaultlanguage, options='', timeout=0)                        
+                recognize_result = self.recognizeQuestion(language=self.defaultlanguage, options='', timeout=10)                        
                 if not recognize_result or not recognize_result.transcript:
                     self.bored()
                     continue
             except:
                 continue
-
+        
             print('Human:', recognize_result.transcript)
             prompt = recognize_result.transcript
+
             self.show_sentiment(self.get_sentiment(prompt))
+        
             words = word_tokenize(prompt.lower())
+
             if 'stop' in words:
                 self.gesture_pub.publish(random.choice(["QT/bye"]))
-                self.talkText("Okay bye!")
+                self.talk("Okay bye!")
                 self.finish = True
+            
+
             response = None
             bs = Synchronizer()
             results = bs.sync([
@@ -225,18 +262,18 @@ class QTGPTGspeechBot():
 
             self.speak(self.refine_sentence(response))
             
-        print("QTGptBot_node Stopping!")
+        print("qt_gpt_demo_node Stopping!")
         self.finish = False
 
 
 if __name__ == "__main__":
    
-    rospy.init_node('QTGptBot_node')
-    rospy.loginfo("QTGptBot_node started!")                               
-    speechBot = QTGPTGspeechBot()
+    rospy.init_node('qt_gpt_demo_node')
+    rospy.loginfo("qt_gpt_demo_node started!")                               
+    speechBot = QTChatBot()
     speechBot.start()
     rospy.spin()
-    rospy.loginfo("QTGptBot_node is ready!")    
+    rospy.loginfo("qt_gpt_demo_node is ready!")    
 
     
     
