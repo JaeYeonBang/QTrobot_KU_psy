@@ -66,7 +66,7 @@ class QTChatBot():
     def __init__(self):
         print("init start, nltk down")
         nltk.download('vader_lexicon')
-        self.model_engine = rospy.get_param("/gpt_demo/chatengine/engine", "chatgpt")
+        self.model_engine = rospy.get_param("/gpt_english/chatengine/engine", "chatgpt")
 
         if self.model_engine == 'chatgpt':
             self.aimodel = aimodel.ChatGPT()
