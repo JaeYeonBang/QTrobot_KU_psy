@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>gpt_demo</name>
+  <name>gpt_demo_korean</name>
   <version>0.0.0</version>
-  <description>QTrobot GPT demo</description>
+  <description>QTrobot GPT korean</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

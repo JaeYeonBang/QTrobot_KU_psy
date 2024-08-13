@@ -66,7 +66,7 @@ class QTChatBot():
     def __init__(self):
         print("init start, nltk down")
         nltk.download('vader_lexicon')
-        self.model_engine = rospy.get_param("/gpt_demo/chatengine/engine", "chatgpt")
+        self.model_engine = rospy.get_param("/gpt_demo_korean/chatengine/engine", "chatgpt")
 
         if self.model_engine == 'chatgpt':
             self.aimodel = aimodel.ChatGPT()
@@ -79,8 +79,8 @@ class QTChatBot():
 
         self.sia = SentimentIntensityAnalyzer()
         self.finish = False
-        self.defaultlanguage = 'en-US'        
-        #self.defaultlanguage = 'ko-KR'        
+        #self.defaultlanguage = 'en-US'        
+        self.defaultlanguage = 'ko-KR'        
         self.error_feedback = "Sorry. It seems I have some technical problem. Please try again."
 
         # define a ros service and publisher
@@ -90,6 +90,8 @@ class QTChatBot():
         self.recognizeQuestion = rospy.ServiceProxy('/qt_robot/gspeech/recognize', speech_recognize) 
         # self.recognizeQuestion = rospy.ServiceProxy('/qt_robot/speech/recognize', speech_recognize) 
         self.audioPlay_pub = rospy.Publisher('/qt_robot/audio/play', String, queue_size=10)
+        
+        self.speechConfig = rospy.ServiceProxy('/qt_robot/speech/config', speech_config)
 
 
         print("init, ros")
@@ -100,7 +102,17 @@ class QTChatBot():
         #rospy.wait_for_service('/qt_robot/speech/recognize')
         rospy.wait_for_service('/qt_robot/gspeech/recognize')
         
+        rospy.wait_for_service('/qt_robot/speech/config') 
+        
+        try:
+            status = speechConfig("ko-KO",0,0)
+        except Exception as e:
+            print(e)
+        
+        
+        
         print("init, fin")
+        
     def talk(self, text):
         print('QT talking:', text)
         self.talkText(text)        
@@ -234,17 +246,18 @@ class QTChatBot():
                 continue
         
             print('Human:', recognize_result.transcript)
+            
+            """
             prompt = recognize_result.transcript
-
             self.show_sentiment(self.get_sentiment(prompt))
         
             words = word_tokenize(prompt.lower())
-
+            
             if 'stop' in words:
                 self.gesture_pub.publish(random.choice(["QT/bye"]))
                 self.talk("Okay bye!")
                 self.finish = True
-            
+            """
 
             response = None
             bs = Synchronizer()
@@ -252,6 +265,7 @@ class QTChatBot():
                 (0, lambda: self.aimodel.generate(prompt)),
                 (0.5, lambda: self.think()),
             ])
+            
             if isinstance(results[0], bool):                
                 response = results[1]
             else:
@@ -262,18 +276,18 @@ class QTChatBot():
 
             self.speak(self.refine_sentence(response))
             
-        print("qt_gpt_demo_node Stopping!")
+        print("qt_gpt_demo_korean_node Stopping!")
         self.finish = False
 
 
 if __name__ == "__main__":
    
-    rospy.init_node('qt_gpt_demo_node')
-    rospy.loginfo("qt_gpt_demo_node started!")                               
+    rospy.init_node('qt_gpt_demo_korean_node')
+    rospy.loginfo("qt_gpt_demo_korean_node started!")                               
     speechBot = QTChatBot()
     speechBot.start()
     rospy.spin()
-    rospy.loginfo("qt_gpt_demo_node is ready!")    
+    rospy.loginfo("qt_gpt_demo_korean_node is ready!")    
 
     
     
