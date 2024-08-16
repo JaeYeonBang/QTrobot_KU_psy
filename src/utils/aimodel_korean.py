@@ -10,11 +10,11 @@ import os
 
 class Davinci3:
     def __init__(self):
-        openai.api_key = rospy.get_param("/gpt_demo_korean/chatengine/OPENAI_KEY", None)
+        openai.api_key = rospy.get_param("/gpt_korean/chatengine/OPENAI_KEY", None)
         self.messages = []
-        self.max_token_length_input = rospy.get_param("/gpt_demo_korean/davinci3/max_token_length_input", 2048)
-        self.max_token_length_total = rospy.get_param("/gpt_demo_korean/davinci3/max_token_length_total", 4096)
-        self.prompt = rospy.get_param("/gpt_demo_korean/davinci3/prompt", "")
+        self.max_token_length_input = rospy.get_param("/gpt_korean/davinci3/max_token_length_input", 2048)
+        self.max_token_length_total = rospy.get_param("/gpt_korean/davinci3/max_token_length_total", 4096)
+        self.prompt = rospy.get_param("/gpt_korean/davinci3/prompt", "")
 
     def generate(self, message):
         
@@ -39,13 +39,13 @@ class Davinci3:
                 response = openai.Completion.create(
                     model="text-davinci-003",
                     prompt=prompt_message,
-                    temperature=rospy.get_param("/gpt_demo_korean/davinci3/temperature", 0.8),
-                    max_tokens=rospy.get_param("/gpt_demo_korean/davinci3/max_tokens", 60),
-                    best_of=rospy.get_param("/gpt_demo_korean/davinci3/best_of", 1),
-                    n=rospy.get_param("/gpt_demo_korean/davinci3/n", 1),
-                    stop=rospy.get_param("/gpt_demo_korean/davinci3/stop", ["Human:"]),
-                    frequency_penalty=rospy.get_param("/gpt_demo_korean/davinci3/frequency_penalty", 0.6),
-                    presence_penalty=rospy.get_param("/gpt_demo_korean/davinci3/presence_penalty", 0.6))
+                    temperature=rospy.get_param("/gpt_korean/davinci3/temperature", 0.8),
+                    max_tokens=rospy.get_param("/gpt_korean/davinci3/max_tokens", 60),
+                    best_of=rospy.get_param("/gpt_korean/davinci3/best_of", 1),
+                    n=rospy.get_param("/gpt_korean/davinci3/n", 1),
+                    stop=rospy.get_param("/gpt_korean/davinci3/stop", ["Human:"]),
+                    frequency_penalty=rospy.get_param("/gpt_korean/davinci3/frequency_penalty", 0.6),
+                    presence_penalty=rospy.get_param("/gpt_korean/davinci3/presence_penalty", 0.6))
                 text = response['choices'][0]['text'].replace(
                     '\n', '').replace(' .', '.').strip()
                 self.messages.append(message_input)
@@ -61,7 +61,7 @@ class ChatGPT:
     def __init__(self):
 
 
-        key = rospy.get_param("/gpt_demo_korean/chatengine/OPENAI_KEY", None)
+        key = rospy.get_param("/gpt_korean/chatengine/OPENAI_KEY", None)
         if key is None:
             raise ValueError("API key for OpenAI is not set in ROS parameters.")
         os.environ['OPENAI_API_KEY'] = key
@@ -71,12 +71,12 @@ class ChatGPT:
 
 
         self.messages = []
-        self.memory_size = rospy.get_param("/gpt_demo_korean/chatgpt/memory_size", 5)
-        self.max_token_length = rospy.get_param("/gpt_demo_korean/chatgpt/max_token_length", 4096)
-        self.character = rospy.get_param("/gpt_demo_korean/chatgpt/character", "qtrobot")
-        self.use_prompt = rospy.get_param("/gpt_demo_korean/chatgpt/use_prompt", False)
+        self.memory_size = rospy.get_param("/gpt_korean/chatgpt/memory_size", 5)
+        self.max_token_length = rospy.get_param("/gpt_korean/chatgpt/max_token_length", 4096)
+        self.character = rospy.get_param("/gpt_korean/chatgpt/character", "qtrobot")
+        self.use_prompt = rospy.get_param("/gpt_korean/chatgpt/use_prompt", False)
         if self.use_prompt:
-            self.system_message = rospy.get_param("/gpt_demo_korean/chatgpt/prompt", "")
+            self.system_message = rospy.get_param("/gpt_korean/chatgpt/prompt", "")
         else:
             if self.character and self.character in ["astronaut","therapist","fisherman","gollum"]:
                 self.system_message = self.get_character_prompt(self.character)
@@ -144,10 +144,10 @@ class ChatGPT:
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages = messages,
-                    temperature=rospy.get_param("/gpt_demo_korean/chatgpt/temperature", 0.8),
-                    max_tokens=rospy.get_param("/gpt_demo_korean/chatgpt/max_tokens", 80),
-                    frequency_penalty=rospy.get_param("/gpt_demo_korean/chatgpt/frequency_penalty", 0.6),
-                    presence_penalty=rospy.get_param("/gpt_demo_korean/chatgpt/presence_penalty", 0.6))
+                    temperature=rospy.get_param("/gpt_korean/chatgpt/temperature", 0.8),
+                    max_tokens=rospy.get_param("/gpt_korean/chatgpt/max_tokens", 80),
+                    frequency_penalty=rospy.get_param("/gpt_korean/chatgpt/frequency_penalty", 0.6),
+                    presence_penalty=rospy.get_param("/gpt_korean/chatgpt/presence_penalty", 0.6))
                 #print(response)
 
                 text = response.choices[0].message.content
@@ -163,13 +163,13 @@ class ChatGPT:
 class FastChat:
     def __init__(self):
         openai.api_key = 'EMPTY'
-        openai.api_base = rospy.get_param("/gpt_demo_korean/fastchat/api_base", 'http://localhost:6000/v1')
+        openai.api_base = rospy.get_param("/gpt_korean/fastchat/api_base", 'http://localhost:6000/v1')
         self.messages = []
-        self.model = rospy.get_param("/gpt_demo_korean/fastchat/model", 'vicuna-7b-v1.3')
-        self.memory_size = rospy.get_param("/gpt_demo_korean/fastchat/memory_size", 5)
-        self.max_token_length = rospy.get_param("/gpt_demo_korean/fastchat/max_token_length", 4096)
-        self.character = rospy.get_param("/gpt_demo_korean/fastchat/character", "qtrobot")        
-        self.system_message = rospy.get_param("/gpt_demo_korean/fastchat/prompt", "")
+        self.model = rospy.get_param("/gpt_korean/fastchat/model", 'vicuna-7b-v1.3')
+        self.memory_size = rospy.get_param("/gpt_korean/fastchat/memory_size", 5)
+        self.max_token_length = rospy.get_param("/gpt_korean/fastchat/max_token_length", 4096)
+        self.character = rospy.get_param("/gpt_korean/fastchat/character", "qtrobot")        
+        self.system_message = rospy.get_param("/gpt_korean/fastchat/prompt", "")
         
     def create_prompt(self, message):
          # cut off long input
@@ -192,10 +192,10 @@ class FastChat:
                 response = openai.ChatCompletion.create(
                     model=self.model,
                     messages=self.create_prompt(message),
-                    temperature=rospy.get_param("/gpt_demo_korean/fastchat/temperature", 0.8),
-                    max_tokens=rospy.get_param("/gpt_demo_korean/fastchat/max_tokens", 41),
-                    frequency_penalty=rospy.get_param("/gpt_demo_korean/fastchat/frequency_penalty", 0.6),
-                    presence_penalty=rospy.get_param("/gpt_demo_korean/fastchat/presence_penalty", 0.6))
+                    temperature=rospy.get_param("/gpt_korean/fastchat/temperature", 0.8),
+                    max_tokens=rospy.get_param("/gpt_korean/fastchat/max_tokens", 41),
+                    frequency_penalty=rospy.get_param("/gpt_korean/fastchat/frequency_penalty", 0.6),
+                    presence_penalty=rospy.get_param("/gpt_korean/fastchat/presence_penalty", 0.6))
                 text = response['choices'][0]['message']
                 self.messages.append({"role": "assistant", "content": text.content})
                 return text.content

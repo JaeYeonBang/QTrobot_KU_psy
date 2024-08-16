@@ -5,7 +5,7 @@ import concurrent.futures
 import asyncio
 import rospy
 import text2emotion as te
-from utils import aimodel
+from utils import aimodel_korean as aimodel
 from std_msgs.msg import String
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
@@ -247,8 +247,9 @@ class QTChatBot():
         
             print('Human:', recognize_result.transcript)
             
-            """
+            
             prompt = recognize_result.transcript
+            """
             self.show_sentiment(self.get_sentiment(prompt))
         
             words = word_tokenize(prompt.lower())
