@@ -1,6 +1,6 @@
 gpt_english:
   chatengine:
-    OPENAI_KEY: "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"
+    OPENAI_KEY: ""
     engine: "chatgpt"
   chatgpt:
     max_token_length: 4096
